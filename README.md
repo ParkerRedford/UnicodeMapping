@@ -1,7 +1,5 @@
-Known Issues:
-    Switching between Blocks and Names tabs crashes the program
-    Some unicode names are not properly displayed with their associated hex value
-
-Planned Features:
-    Add a block text value for the selected character
-    Better visual appeals
+<<<<<<< HEAD
+Open in Visual Studio
+=======
+Open in Visual Studio
+>>>>>>> 1f13bb88b0ad5fc3f1dee126243f61f396576961
