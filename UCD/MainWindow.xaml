@@ -32,7 +32,7 @@
             Grid.Row="0"
             Grid.Column="0">
             <DockPanel>
-                <TextBox x:Name="filterInput" Width="200" Margin="5 0" />
+                <TextBox x:Name="filterInput" KeyDown="filterEnter" Width="200" Margin="5 0" />
                 <Button x:Name="filterBtn" Click="filterClick" Content="Filter" Width="75" />
             </DockPanel>
         </Grid>

@@ -73,15 +73,7 @@ namespace UCD
             }
 
         }
-        //void tabChange(object sender, SelectionChangedEventArgs e)
-        //{
-        //    blocksList.Items.Clear();
-        //    namesList.Items.Clear();
-
-        //    blocksList.Items.Refresh();
-        //    namesList.Items.Refresh();
-        //}
-        void filterClick(object sender, RoutedEventArgs e)
+        private void filterF()
         {
             TabItem i = tabs.SelectedItem as TabItem;
             if (i.Header.ToString() == "Blocks")
@@ -120,6 +112,17 @@ namespace UCD
                     filterInput.Foreground = Brushes.Red;
                 }
             }
+        }
+        private void filterEnter(object sender, KeyEventArgs e)
+        {
+            if(e.Key == Key.Return)
+            {
+                filterF();
+            }
+        }
+        void filterClick(object sender, RoutedEventArgs e)
+        {
+            filterF();
         }
         private void selectedName(object sender, RoutedEventArgs e)
         {
