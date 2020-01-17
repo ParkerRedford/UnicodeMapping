@@ -78,7 +78,7 @@ namespace UCD
             TabItem i = tabs.SelectedItem as TabItem;
             if (i.Header.ToString() == "Blocks")
             {
-                List<Block> filter = blocks.Where(w => w.block.ToLower().Contains(filterInput.Text.ToString().ToLower())).ToList();
+                List<Block> filter = blocks.Where(w => w.block.Contains(filterInput.Text.ToString().ToLower())).ToList();
                 try
                 {
                     blocksList.ItemsSource = filter;
@@ -115,7 +115,7 @@ namespace UCD
         }
         private void filterEnter(object sender, KeyEventArgs e)
         {
-            if(e.Key == Key.Return)
+            if (e.Key == Key.Return)
             {
                 filterF();
             }
@@ -134,6 +134,8 @@ namespace UCD
             name.Text = codes[v];
             uniText.Text = Char.ConvertFromUtf32(v);
             display.Text = Char.ConvertFromUtf32(v);
+            display.FontFamily = fontFamily;
+            disFont.Text = fontFamily.Source;
         }
         void Blocks_Loaded(object sender, RoutedEventArgs e)
         {
@@ -152,22 +154,28 @@ namespace UCD
                             string[] n = s.Split(';');
                             string[] set = n[0].Split("..");
 
-                            Block block = new Block();
-                            block.block = n[1];
-                            block.begin = set[0];
-                            block.end = set[1];
+                            //Block block = new Block();
+                            //block.block = n[1];
+                            //block.begin = set[0];
+                            //block.end = set[1];
 
-                            blocks.Add(block);
+                            blocks.Add(new Block
+                            {
+                                block = n[1],
+                                begin = set[0],
+                                end = set[1]
+                            });
                         }
                     }
                 }
                 var combo = sender as ListBox;
 
                 combo.ItemsSource = blocks;
-                blocks.Sort(delegate (Block b1, Block b2)
-                {
-                    return b1.block.CompareTo(b2.block);
-                });
+                combo.SelectedIndex = 0;
+                //blocks.Sort(delegate (Block b1, Block b2)
+                //{
+                //    return b1.block.CompareTo(b2.block);
+                //});
             }
         }
         void fillWrap(Block block, FontFamily fontFamily)
@@ -217,10 +225,10 @@ namespace UCD
                 MessageBox.Show(ex.Message);
             }
         }
-        void ComboSelect(object sender, SelectionChangedEventArgs e)
+        void blockSelectionChange(object sender, SelectionChangedEventArgs e)
         {
             var selected = sender as ListBox;
-            var b = selected.SelectedValue as Block;
+            var b = selected.SelectedItem as Block;
 
             block.begin = b.begin;
             block.end = b.end;
@@ -237,6 +245,7 @@ namespace UCD
             hexText.Text = b.hex;
             name.Text = b.ToolTip.ToString();
             uniText.Text = b.Content.ToString();
+            disFont.Text = b.FontFamily.Source;
         }
         void IdCopy(object sender, RoutedEventArgs e)
         {
@@ -254,17 +263,30 @@ namespace UCD
         {
             Clipboard.SetText(uniText.Text);
         }
-        void LoadFonts(object sender, RoutedEventArgs e)
+        void loadFonts(object sender, RoutedEventArgs e)
         {
-            fonts.ItemsSource = Fonts.SystemFontFamilies;
+            List<ComboBoxItem> fl = new List<ComboBoxItem>();
+            foreach (FontFamily f in Fonts.SystemFontFamilies)
+            {
+                fl.Add(
+                    new ComboBoxItem()
+                    {
+                        Content = f,
+                        FontFamily = f,
+                        FontSize = 24,
+                        Padding = new Thickness { Left = 10, Top = 10, Right = 10, Bottom = 10 }
+                    });
+            }
+            fonts.ItemsSource = fl;
             fonts.SelectedIndex = 0;
         }
-        void FontChanged(object sender, SelectionChangedEventArgs e)
+        void fontChanged(object sender, SelectionChangedEventArgs e)
         {
             var c = sender as ComboBox;
-            var s = c.SelectedValue as FontFamily;
+            var s = c.SelectedValue as ComboBoxItem;
 
-            fontFamily = s;
+            fontFamily = s.FontFamily;
+            fonts.FontFamily = s.FontFamily;
             fillWrap(block, fontFamily);
         }
     }

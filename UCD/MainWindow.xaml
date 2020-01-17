@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Title="Unicode Character Database"
     Width="1280"
-    Height="800"
+    Height="920"
     mc:Ignorable="d">
     <Grid x:Name="window" ScrollViewer.CanContentScroll="True">
         <Grid.ColumnDefinitions>
@@ -32,8 +32,8 @@
             Grid.Row="0"
             Grid.Column="0">
             <DockPanel>
-                <TextBox x:Name="filterInput" KeyDown="filterEnter" Width="200" Margin="5 0" />
-                <Button x:Name="filterBtn" Click="filterClick" Content="Filter" Width="75" />
+                <TextBox x:Name="filterInput" KeyDown="filterEnter" Width="200" Height="30" Margin="5 0" />
+                <Button x:Name="filterBtn" Click="filterClick" Content="Filter" Height="30" Width="75" />
             </DockPanel>
         </Grid>
         <Grid Grid.Row="1" Grid.RowSpan="2" Width="300">
@@ -43,10 +43,11 @@
                     x:Name="blocksList"
                     MinWidth="200"
                     DisplayMemberPath="block"
+                        SelectedValuePath="Key"
                     ItemsSource="{Binding blocks}"
                     Loaded="Blocks_Loaded"
                     SelectedIndex="0"
-                    SelectionChanged="ComboSelect" />
+                    SelectionChanged="blockSelectionChange" />
                 </TabItem>
                 <TabItem Header="Names">
                     <ListBox x:Name="namesList" MinWidth="200"
@@ -68,11 +69,13 @@
             <ComboBox
                 x:Name="fonts"
                 Grid.Row="0"
-                Width="200"
+                Width="250"
+                Height="50"
+                FontSize="24"
+                Padding="10"
                 IsTextSearchEnabled="True"
-                Loaded="LoadFonts"
-                SelectedIndex="0"
-                SelectionChanged="FontChanged" />
+                Loaded="loadFonts"
+                SelectionChanged="fontChanged" />
             <Label Content="{Binding ElementName=slider, Path=Value}" ContentStringFormat="Current size: {0}" />
             <Label Content="{Binding ElementName=slider, Path=Minimum}" />
             <Slider
@@ -162,6 +165,13 @@
                             Width="150"
                             Click="CopyUni"
                             Content="Copy as Char[]" />
+                    </DockPanel>
+                    <DockPanel>
+                        <Label Width="100" Content="Font Family" />
+                        <TextBox x:Name="disFont" Width="200" />
+                        <Button
+                            Width="150"
+                            Click="CopyUni" />
                     </DockPanel>
                 </StackPanel>
             </DockPanel>
