@@ -28,88 +28,89 @@ namespace UCD
         public string block { get; set; }
         public string begin { get; set; }
         public string end { get; set; }
+
+        public List<Unicode> unicodes = new List<Unicode>();
     }
-    public class Unicode : Button
+    public class Unicode
     {
-        public int Id { get; set; }
-        public string hex { get; set; }
+        public int Integer { get; set; }
+        public string Hex { get; set; }
+        public string Block { get; set; }
+        public string Name { get; set; }
+        public string DisplayCharacter { get; set; }
+    }
+    public class UnicodeBtn : Button
+    {
+        public int integerValue { get; set; }
+        public string hexValue { get; set; }
+        public string block { get; set; }
+        public string descName { get; set; }
+        public string format { get; set; }
     }
     public partial class MainWindow : Window
     {
-        FontFamily fontFamily = new FontFamily();
-        Block block = new Block();
-        List<Block> blocks = new List<Block>();
+        FontFamily MainFont = new FontFamily();
+        Block MainBlock = new Block();
+        List<Block> blocks = new List<Block>().Distinct().ToList();
+        List<Unicode> names = new List<Unicode>();
         List<Unicode> Unicodes = new List<Unicode>();
-        static SortedDictionary<int, string> codes = new SortedDictionary<int, string>();
-        string hex;
+        //static SortedDictionary<int, string> codes = new SortedDictionary<int, string>();
+        Dictionary<int, string> delimiter = new Dictionary<int, string>();
 
         public MainWindow()
         {
             InitializeComponent();
 
-            string[] namesFile = System.IO.File.ReadAllLines(Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + @"\Resources\UCD\UnicodeData.txt");
+            string[] blocksFile = System.IO.File.ReadAllLines(Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + @"\Resources\UCD\Blocks.txt");
+            string[] namesFile = System.IO.File.ReadAllLines(Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + @"\Resources\UCD\extracted\DerivedName.txt");
 
-            Regex rx = new Regex(@"\;[A-Z\s\-]+\;");
-            Regex n = new Regex(@"N;[A-Z\s\-]+;{4,}");
+            //Regex rx = new Regex(@"\;[A-Z\s\-]+\;");
+            //Regex n = new Regex(@"N;[A-Z\s\-]+;{4,}");
+            //Create block from each line in Blocks.txt
+            foreach (string s in blocksFile)
+            {
+                if (s.Contains(';'))
+                {
+                    string[] split = s.Split(';');
+                    string[] blSplit = split[0].Split("..");
+
+                    blocks.Add(new Block
+                    {
+                        begin = blSplit[0].Trim(),
+                        end = blSplit[1].Trim(),
+                        block = split[1].Trim()
+                    });
+                }
+            }
+            //Assign begin and end for each block in delimiter dictionary
             foreach (string s in namesFile)
             {
-                Match m = rx.Match(s);
-                Match ns = n.Match(s);
-
-                string[] sp = s.Split(';');
-                if (m.Success)
+                if (s.Contains(';') && !s.Contains(".."))
                 {
-                    string t = m.Value.Trim(';');
-                    codes.Add(int.Parse(sp[0], System.Globalization.NumberStyles.HexNumber), t);
-                }
-                if (ns.Success)
-                {
-                    string t = ns.Value.Trim(';');
-                    string[] ta = ns.Value.ToString().Split(';');
-
-                    codes.Remove(int.Parse(sp[0], System.Globalization.NumberStyles.HexNumber));
-                    codes.Add(int.Parse(sp[0], System.Globalization.NumberStyles.HexNumber), ta[1]);
+                    string[] split = s.Split(';');
+                    delimiter.Add(int.Parse(split[0].Trim(), NumberStyles.HexNumber), split[1].Trim());
                 }
             }
-
-        }
-        private void filterF()
-        {
-            TabItem i = tabs.SelectedItem as TabItem;
-            if (i.Header.ToString() == "Blocks")
+            //Assign individual unicodes from each block
+            foreach (Block b in blocks)
             {
-                List<Block> filter = blocks.Where(w => w.block.Contains(filterInput.Text.ToString().ToLower())).ToList();
-                try
+                int beginInt = int.Parse(b.begin, NumberStyles.HexNumber);
+                int endInt = int.Parse(b.end, NumberStyles.HexNumber);
+                for (int i = beginInt; i <= endInt; i++)
                 {
-                    blocksList.ItemsSource = filter;
-                    filterInput.Foreground = Brushes.Black;
-                }
-                catch (Exception ex)
-                {
-                    blocksList.ItemsSource = blocks;
-                    filterInput.Foreground = Brushes.Red;
-                }
-                if (filter.ToList().Count == 0)
-                {
-                    filterInput.Foreground = Brushes.Red;
-                }
-            }
-            else if (i.Header.ToString() == "Names")
-            {
-                int c = codes.Where(w => w.Value.ToLower().Contains(filterInput.Text.ToString().ToLower())).ToList().Count;
-                try
-                {
-                    namesList.ItemsSource = codes.Where(w => w.Value.ToLower().Contains(filterInput.Text.ToString().ToLower())).ToList();
-                    filterInput.Foreground = Brushes.Black;
-                }
-                catch (Exception ex)
-                {
-                    namesList.ItemsSource = codes;
-                    filterInput.Foreground = Brushes.Red;
-                }
-                if (c == 0)
-                {
-                    filterInput.Foreground = Brushes.Red;
+                    if (delimiter.ContainsKey(i))
+                    {
+                        Unicode u = new Unicode
+                        {
+                            Integer = i,
+                            Hex = i.ToString("X"),
+                            Block = b.block,
+                            Name = delimiter[i],
+                            DisplayCharacter = char.ConvertFromUtf32(i)
+                        };
+                        b.unicodes.Add(u);
+                        names.Add(u);
+                    }
                 }
             }
         }
@@ -117,139 +118,48 @@ namespace UCD
         {
             if (e.Key == Key.Return)
             {
-                filterF();
-            }
-        }
-        void filterClick(object sender, RoutedEventArgs e)
-        {
-            filterF();
-        }
-        private void selectedName(object sender, RoutedEventArgs e)
-        {
-            var n = sender as ListBox;
-            int v = (int)n.SelectedValue;
-
-            id.Text = n.SelectedValue.ToString();
-            hexText.Text = int.Parse(v.ToString("X"), NumberStyles.HexNumber).ToString("X");
-            name.Text = codes[v];
-            uniText.Text = Char.ConvertFromUtf32(v);
-            display.Text = Char.ConvertFromUtf32(v);
-            display.FontFamily = fontFamily;
-            disFont.Text = fontFamily.Source;
-        }
-        void Blocks_Loaded(object sender, RoutedEventArgs e)
-        {
-            string blocksFile = Directory.GetParent(Environment.CurrentDirectory).Parent.FullName + @"/Resources\UCD\Blocks.txt";
-
-            if (File.Exists(blocksFile))
-            {
-                using (StreamReader sr = File.OpenText(blocksFile))
+                try
                 {
-                    string s;
-                    Regex rx = new Regex("(([0-9]|[a-z]|[A-Z])+)(..)(([0-9]|[a-z]|[A-Z])+)(; )([A-Z])+");
-                    while ((s = sr.ReadLine()) != null)
-                    {
-                        if (rx.IsMatch(s))
-                        {
-                            string[] n = s.Split(';');
-                            string[] set = n[0].Split("..");
-
-                            //Block block = new Block();
-                            //block.block = n[1];
-                            //block.begin = set[0];
-                            //block.end = set[1];
-
-                            blocks.Add(new Block
-                            {
-                                block = n[1],
-                                begin = set[0],
-                                end = set[1]
-                            });
-                        }
-                    }
+                    if (intRad.IsChecked == true)
+                        data.ItemsSource = Unicodes.Where(w => w.Integer.ToString().Contains(filterInput.Text.ToString().ToLower())).ToList();
+                    if (hexRad.IsChecked == true)
+                        data.ItemsSource = Unicodes.Where(w => w.Hex.ToLower().Contains(filterInput.Text.ToString().ToLower())).ToList();
+                    if (blRad.IsChecked == true)
+                        data.ItemsSource = Unicodes.Where(w => w.Block.ToLower().Contains(filterInput.Text.ToString().ToLower())).ToList();
+                    if (nameRad.IsChecked == true)
+                        data.ItemsSource = Unicodes.Where(w => w.Name.ToLower().Contains(filterInput.Text.ToString().ToLower())).ToList();
                 }
-                var combo = sender as ListBox;
-
-                combo.ItemsSource = blocks;
-                combo.SelectedIndex = 0;
-                //blocks.Sort(delegate (Block b1, Block b2)
-                //{
-                //    return b1.block.CompareTo(b2.block);
-                //});
-            }
-        }
-        void fillWrap(Block block, FontFamily fontFamily)
-        {
-
-            Unicodes.Clear();
-            wrapPanel.Children.Clear();
-
-            try
-            {
-                int d = int.Parse(block.begin, System.Globalization.NumberStyles.HexNumber);
-                int du = int.Parse(block.end, System.Globalization.NumberStyles.HexNumber);
-                for (int i = d; i <= du; i++)
+                catch (Exception ex)
                 {
-                    Unicode btn = new Unicode();
-                    if (codes.ContainsKey(i))
-                    {
-                        btn.Background = new SolidColorBrush(new Color
-                        {
-                            A = 255,
-                            R = 230,
-                            G = 230,
-                            B = 230
-                        });
-                        btn.Id = i;
-                        btn.hex = String.Format("{0:X}", i);
-                        btn.Content = Char.ConvertFromUtf32(i);
-                        btn.ToolTip = codes[i];
-                        btn.FontFamily = fontFamily;
-                    }
-                    else
-                    {
-                        btn.Content = "";
-                        btn.ToolTip = "Empty";
-                        btn.Background = Brushes.DarkRed;
-                    }
-
-                    btn.Click += btnClick;
-
-                    Unicodes.Add(btn);
-                    wrapPanel.Children.Add(btn);
+                    //Catch try is here to avoid the program from crashing
                 }
             }
-
-            catch (Exception ex)
+        }
+        private void loadBlocks(object sender, RoutedEventArgs e)
+        {
+            foreach (Block b in blocks)
             {
-                MessageBox.Show(ex.Message);
+                foreach (Unicode u in b.unicodes)
+                {
+                    Unicodes.Add(u);
+                }
             }
+            data.ItemsSource = Unicodes;
         }
-        void blockSelectionChange(object sender, SelectionChangedEventArgs e)
+        void dataSelection(object sender, SelectedCellsChangedEventArgs e)
         {
-            var selected = sender as ListBox;
-            var b = selected.SelectedItem as Block;
-
-            block.begin = b.begin;
-            block.end = b.end;
-
-            fillWrap(block, fontFamily);
-        }
-        void btnClick(object sender, RoutedEventArgs e)
-        {
-            var b = sender as Unicode;
-            id.Text = b.Id.ToString();
-            hex = b.hex;
-            display.Text = b.Content.ToString();
-            display.FontFamily = b.FontFamily;
-            hexText.Text = b.hex;
-            name.Text = b.ToolTip.ToString();
-            uniText.Text = b.Content.ToString();
-            disFont.Text = b.FontFamily.Source;
+            DataGrid d = sender as DataGrid;
+            Unicode b = d.SelectedItem as Unicode;
+            integerText.Text = b.Integer.ToString();
+            hexText.Text = b.Hex;
+            blockN.Text = b.Block;
+            name.Text = b.Name;
+            format.Text = b.DisplayCharacter;
+            display.Text = b.DisplayCharacter;
         }
         void IdCopy(object sender, RoutedEventArgs e)
         {
-            Clipboard.SetText(id.Text);
+            Clipboard.SetText(integerText.Text);
         }
         void CopyHex(object sender, RoutedEventArgs e)
         {
@@ -261,11 +171,12 @@ namespace UCD
         }
         void CopyUni(object sender, RoutedEventArgs e)
         {
-            Clipboard.SetText(uniText.Text);
+            Clipboard.SetText(format.Text);
         }
         void loadFonts(object sender, RoutedEventArgs e)
         {
             List<ComboBoxItem> fl = new List<ComboBoxItem>();
+            int p = 10;
             foreach (FontFamily f in Fonts.SystemFontFamilies)
             {
                 fl.Add(
@@ -274,7 +185,7 @@ namespace UCD
                         Content = f,
                         FontFamily = f,
                         FontSize = 24,
-                        Padding = new Thickness { Left = 10, Top = 10, Right = 10, Bottom = 10 }
+                        Padding = new Thickness { Left = p, Top = p, Right = p, Bottom = p }
                     });
             }
             fonts.ItemsSource = fl;
@@ -285,9 +196,8 @@ namespace UCD
             var c = sender as ComboBox;
             var s = c.SelectedValue as ComboBoxItem;
 
-            fontFamily = s.FontFamily;
-            fonts.FontFamily = s.FontFamily;
-            fillWrap(block, fontFamily);
+            textFont.Text = s.FontFamily.Source;
+            display.FontFamily = s.FontFamily;
         }
     }
 }
