@@ -1,7 +1,5 @@
 Known Issues:
-    Switching between Blocks and Names tabs crashes the program
-    Some unicode names are not properly displayed with their associated hex value
+    Some Unicodes that has a value but does not have a display character do not show up
 
 Planned Features:
-    Add a block text value for the selected character
-    Better visual appeals
+    Better visual appeal
